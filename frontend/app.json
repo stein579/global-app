@@ -1,0 +1,40 @@
+{
+  "expo": {
+    "name": "英語学習教材ジェネレーター",
+    "slug": "english-learning-app",
+    "scheme": "englishlearningapp",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "userInterfaceStyle": "automatic",
+    "newArchEnabled": true,
+    "icon": "./assets/icon.png",
+    "splash": {
+      "image": "./assets/splash.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#F5F3FF"
+    },
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.englishlearningapp.mobile"
+    },
+    "android": {
+      "package": "com.englishlearningapp.mobile",
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#F5F3FF"
+      }
+    },
+    "web": {
+      "bundler": "metro",
+      "output": "static"
+    },
+    "plugins": [
+      "expo-router",
+      "expo-asset",
+      "expo-font"
+    ],
+    "experiments": {
+      "typedRoutes": true
+    }
+  }
+}
