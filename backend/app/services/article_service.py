@@ -7,7 +7,7 @@ from app.schemas.article import (
     SentenceResponse,
     VocabularyResponse,
 )
-from app.schemas.question import QuizQuestionResponse
+from app.schemas.question import QuizQuestionResponse, QuizQuestionStatus
 
 
 def persist_article(
@@ -230,10 +230,38 @@ def get_quiz_questions(article_id: str) -> list[QuizQuestionResponse]:
         supabase.table("quiz_questions")
         .select(
             "id, article_id, type, answer, fill_in_sentence, sentence_translation_ja, "
-            "part_of_speech_ja, meaning_ja"
+            "part_of_speech_ja, meaning_ja, status, order_index"
         )
         .eq("article_id", article_id)
+        # Without an explicit order, Postgres may return rows in whatever
+        # physical order they happen to sit in - which an UPDATE (e.g. a
+        # status toggle) can silently change. order_index keeps this fixed.
+        .order("order_index")
+        .order("id")
         .execute()
         .data
     )
     return [QuizQuestionResponse(**row) for row in rows]
+
+
+def update_quiz_question_status(
+    question_id: str, status: QuizQuestionStatus
+) -> QuizQuestionResponse | None:
+    """Sets a question's status, either from the auto-grading sync after a
+    quiz answer or from a manual override on the status management page.
+
+    Returns None if no question exists with this id, so the endpoint can 404
+    instead of reporting a false success.
+    """
+
+    supabase = get_supabase()
+    rows = (
+        supabase.table("quiz_questions")
+        .update({"status": status.value})
+        .eq("id", question_id)
+        .execute()
+        .data
+    )
+    if not rows:
+        return None
+    return QuizQuestionResponse(**rows[0])

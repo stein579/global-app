@@ -68,4 +68,11 @@ def _generate_quiz_questions(analysis: ArticleAnalysisResult) -> list[dict]:
                 }
             )
 
+    # Persisted as-is and used to sort `get_quiz_questions` results, so the
+    # article/sentence order questions were generated in stays fixed no
+    # matter how status updates later shuffle the underlying table's
+    # physical row order.
+    for order_index, question in enumerate(questions):
+        question["order_index"] = order_index
+
     return questions

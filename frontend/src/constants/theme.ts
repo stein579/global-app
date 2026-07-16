@@ -24,3 +24,15 @@ export const directionLabelsJa: Record<string, string> = {
   en_to_ja: "英 → 日",
   ja_to_en: "日 → 英",
 };
+
+export const questionStatusColors: Record<string, string> = {
+  unanswered: "bg-neutral-100 text-neutral-600 dark:bg-neutral-700 dark:text-neutral-300",
+  correct: "bg-emerald-100 text-emerald-700 dark:bg-emerald-900 dark:text-emerald-200",
+  incorrect: "bg-rose-100 text-rose-700 dark:bg-rose-900 dark:text-rose-200",
+};
+
+export const questionStatusLabelsJa: Record<string, string> = {
+  unanswered: "未着手",
+  correct: "覚えた",
+  incorrect: "復習",
+};

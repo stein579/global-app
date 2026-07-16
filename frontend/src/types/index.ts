@@ -50,6 +50,11 @@ export interface ArticleDetail extends ArticleSummary {
 // whole sentence ("sentence").
 export type QuizQuestionType = "vocabulary" | "sentence";
 
+// Per-question progress: auto-set to "correct"/"incorrect" after a quiz
+// answer, surfaced on the article detail screen's status/test shortcuts and
+// vocabulary list.
+export type QuestionStatus = "unanswered" | "correct" | "incorrect";
+
 export interface QuizQuestion {
   id: string;
   articleId: string;
@@ -63,6 +68,7 @@ export interface QuizQuestion {
   /** Populated only for type "vocabulary". */
   partOfSpeechJa: string | null;
   meaningJa: string | null;
+  status: QuestionStatus;
 }
 
 export interface FlashCard {

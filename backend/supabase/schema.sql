@@ -68,6 +68,20 @@ create table if not exists quiz_questions (
   created_at timestamptz not null default now()
 );
 
+-- Per-question progress: auto-set to 'correct'/'incorrect' when answered in a
+-- quiz session, and used to power the article detail screen's status/test
+-- shortcuts and vocabulary list. Added via ALTER (rather than inline above)
+-- so it also applies to pre-existing tables.
+alter table quiz_questions add column if not exists status text not null default 'unanswered'
+  check (status in ('unanswered', 'correct', 'incorrect'));
+
+-- Fixes display order (article/sentence generation order) so status updates
+-- - which rewrite the row and can change its physical position in an
+-- unordered scan - never reshuffle the vocabulary list. Existing rows all
+-- default to 0 and sort by id as a tiebreak; only newly-generated articles
+-- get a real sequence (set in analyze_service.py).
+alter table quiz_questions add column if not exists order_index int not null default 0;
+
 -- Drop columns from the old multiple_choice / en_to_ja quiz format
 -- (no-ops on fresh installs where they were never created above).
 alter table sentences drop column if exists grammar_point;

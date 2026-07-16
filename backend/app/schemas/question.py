@@ -8,6 +8,12 @@ class QuizQuestionType(str, Enum):
     sentence = "sentence"
 
 
+class QuizQuestionStatus(str, Enum):
+    unanswered = "unanswered"
+    correct = "correct"
+    incorrect = "incorrect"
+
+
 class QuizQuestionResponse(BaseModel):
     id: str
     article_id: str
@@ -23,3 +29,10 @@ class QuizQuestionResponse(BaseModel):
     # Populated only for type="vocabulary".
     part_of_speech_ja: str | None = None
     meaning_ja: str | None = None
+    # Auto-updated on quiz answer, freely re-settable via the status update
+    # endpoint.
+    status: QuizQuestionStatus = QuizQuestionStatus.unanswered
+
+
+class QuizQuestionStatusUpdateRequest(BaseModel):
+    status: QuizQuestionStatus

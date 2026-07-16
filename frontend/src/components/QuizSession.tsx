@@ -8,13 +8,17 @@ import { Card } from "@/components/Card";
 import { GradientHeader } from "@/components/GradientHeader";
 import { ProgressBar } from "@/components/ProgressBar";
 import { useQuizQuestions } from "@/hooks/useQuizQuestions";
+import { useUpdateQuestionStatus } from "@/hooks/useUpdateQuestionStatus";
 import { useReviewStore } from "@/store/useReviewStore";
-import type { QuizQuestionType } from "@/types";
+import type { QuestionStatus, QuizQuestionType } from "@/types";
 
 interface QuizSessionProps {
   articleId: string | undefined;
   type: QuizQuestionType;
   title: string;
+  /** Restricts the session to questions currently in this status - powers
+   * the article detail screen's "テストへ直行" shortcuts. */
+  status?: QuestionStatus;
 }
 
 /**
@@ -25,10 +29,11 @@ interface QuizSessionProps {
  * is the single source of truth for whether the current question has been
  * answered yet.
  */
-export function QuizSession({ articleId, type, title }: QuizSessionProps) {
+export function QuizSession({ articleId, type, title, status }: QuizSessionProps) {
   const router = useRouter();
-  const { data: questions, isLoading } = useQuizQuestions(articleId, type);
+  const { data: questions, isLoading } = useQuizQuestions(articleId, type, status);
   const { currentIndex, score, submitAnswer, next, reset } = useReviewStore();
+  const updateQuestionStatus = useUpdateQuestionStatus();
   const [inputValue, setInputValue] = useState("");
   const [isCorrect, setIsCorrect] = useState<boolean | null>(null);
 
@@ -41,7 +46,7 @@ export function QuizSession({ articleId, type, title }: QuizSessionProps) {
     reset();
     resetQuestionState();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [articleId, type, reset]);
+  }, [articleId, type, status, reset]);
 
   if (isLoading || !questions) {
     return (
@@ -91,6 +96,10 @@ export function QuizSession({ articleId, type, title }: QuizSessionProps) {
     const correct = trimmed.toLowerCase() === question.answer.trim().toLowerCase();
     setIsCorrect(correct);
     submitAnswer(question.id, trimmed, correct);
+    updateQuestionStatus.mutate({
+      questionId: question.id,
+      status: correct ? "correct" : "incorrect",
+    });
   };
 
   const handleNext = () => {
@@ -178,7 +187,7 @@ export function QuizSession({ articleId, type, title }: QuizSessionProps) {
                     : "text-rose-600 dark:text-rose-300"
                 }`}
               >
-                {isCorrect ? "正解！" : `不正解 ・ 正解: ${question.answer}`}
+                {isCorrect ? "正解！素晴らしい！完璧です！ 🎉" : `惜しい！この間違いが成長のチャンス！ ・ 正解: ${question.answer}`}
               </Text>
             </Card>
           )}

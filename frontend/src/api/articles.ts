@@ -5,6 +5,7 @@ import type {
   ArticleSummary,
   DifficultyLevel,
   ParagraphItem,
+  QuestionStatus,
   QuizQuestion,
   SentenceItem,
   VocabularyItem,
@@ -56,7 +57,7 @@ interface ArticleDetailDto extends ArticleSummaryDto {
   paragraphs: ParagraphDto[];
 }
 
-interface QuizQuestionDto {
+export interface QuizQuestionDto {
   id: string;
   article_id: string;
   type: QuizQuestion["type"];
@@ -65,6 +66,7 @@ interface QuizQuestionDto {
   sentence_translation_ja: string;
   part_of_speech_ja: string | null;
   meaning_ja: string | null;
+  status: QuestionStatus;
 }
 
 interface AnalyzeArticleResponseDto {
@@ -117,7 +119,7 @@ const mapArticleDetail = (dto: ArticleDetailDto): ArticleDetail => ({
   paragraphs: dto.paragraphs.map(mapParagraph),
 });
 
-const mapQuizQuestion = (dto: QuizQuestionDto): QuizQuestion => ({
+export const mapQuizQuestion = (dto: QuizQuestionDto): QuizQuestion => ({
   id: dto.id,
   articleId: dto.article_id,
   type: dto.type,
@@ -126,6 +128,7 @@ const mapQuizQuestion = (dto: QuizQuestionDto): QuizQuestion => ({
   sentenceTranslationJa: dto.sentence_translation_ja,
   partOfSpeechJa: dto.part_of_speech_ja,
   meaningJa: dto.meaning_ja,
+  status: dto.status,
 });
 
 // =========================================================================
