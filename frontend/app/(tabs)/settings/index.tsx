@@ -109,7 +109,7 @@ export default function SettingsScreen() {
 
         <Card>
           <Text className="mb-3 text-base font-semibold text-neutral-900 dark:text-white">
-            1日の学習目標(記事数)
+            1日の学習目標(英文数)
           </Text>
           <View className="flex-row" style={{ gap: 8 }}>
             {DAILY_GOAL_STEPS.map((goal) => (

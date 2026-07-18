@@ -19,12 +19,12 @@ export default function DashboardScreen() {
     <SafeAreaView className="flex-1 bg-primary-50 dark:bg-neutral-900" edges={["bottom"]}>
       <GradientHeader
         title="ダッシュボード"
-        subtitle="今日も英語の記事を読んで学習しましょう"
+        subtitle="今日も英文を読んで学習しましょう"
       />
       <ScrollView className="flex-1 px-5" contentContainerStyle={{ paddingVertical: 20, gap: 16 }}>
         <Card>
           <Text className="text-sm font-medium text-neutral-500 dark:text-neutral-400">
-            学習した記事数 / 目標
+            学習した英文数 / 目標
           </Text>
           <Text className="mt-1 text-2xl font-bold text-neutral-900 dark:text-white">
             {isLoading ? "…" : articleCount} / {dailyGoal}
@@ -38,7 +38,7 @@ export default function DashboardScreen() {
           <Link href="/(tabs)/articles" asChild>
             <Card>
               <Text className="text-base font-semibold text-neutral-900 dark:text-white">
-                📚 記事一覧・新規解析
+                📚 英文一覧・新規解析
               </Text>
               <Text className="mt-1 text-sm text-neutral-500 dark:text-neutral-400">
                 英文を貼り付けてAIで4階層データに解析し、教材を自動生成します

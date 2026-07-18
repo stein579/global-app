@@ -40,7 +40,7 @@ export default function ReviewIndexScreen() {
 
   return (
     <SafeAreaView className="flex-1 bg-primary-50 dark:bg-neutral-900" edges={["bottom"]}>
-      <GradientHeader title="復習" subtitle="記事ごとにクイズ・フラッシュカードで復習しましょう" />
+      <GradientHeader title="復習" subtitle="英文ごとにクイズ・フラッシュカードで復習しましょう" />
       <View className="flex-1 px-5 pt-4">
         <FlatList
           data={articles ?? []}
@@ -51,7 +51,7 @@ export default function ReviewIndexScreen() {
           ListEmptyComponent={
             !isLoading ? (
               <Text className="mt-10 text-center text-neutral-400">
-                復習できる記事がありません。まずは記事を解析しましょう。
+                復習できる英文がありません。まずは英文を解析しましょう。
               </Text>
             ) : null
           }

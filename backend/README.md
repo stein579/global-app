@@ -1,6 +1,6 @@
 # Backend (FastAPI)
 
-英文記事をAI(Gemini)で「記事 → 段落 → 文 → 単語」の4階層に解析し、
+英文をAI(Gemini)で「英文 → 段落 → 文 → 単語」の4階層に解析し、
 Supabase(PostgreSQL)へ一括保存する API。Docker不使用、ローカルの Python venv で起動します。
 
 ## セットアップ
@@ -36,8 +36,8 @@ uvicorn app.main:app --reload --port 8000
 | Method | Path                              | 説明                                                   |
 | ------ | ---------------------------------- | ------------------------------------------------------ |
 | POST   | `/v1/articles/analyze`             | 英文を4階層データに解析しクイズを生成、Supabaseへ保存 |
-| GET    | `/v1/articles`                     | 記事一覧取得                                            |
-| GET    | `/v1/articles/{id}/questions`      | 指定記事の復習用クイズ取得                             |
+| GET    | `/v1/articles`                     | 英文一覧取得                                            |
+| GET    | `/v1/articles/{id}/questions`      | 指定英文の復習用クイズ取得                             |
 
 ## ディレクトリ構成
 

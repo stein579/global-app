@@ -8,7 +8,7 @@ settings = get_settings()
 
 app = FastAPI(
     title="English Learning Material Generator API",
-    description="AI(Gemini)を用いて英文記事を4階層(記事/段落/文/単語)に解析し、復習クイズを自動生成するバックエンド",
+    description="AI(Gemini)を用いて英文を4階層(英文/段落/文/単語)に解析し、復習クイズを自動生成するバックエンド",
     version="0.1.0",
 )
 

@@ -17,7 +17,7 @@ import { confirmDestructiveAction } from "@/utils/confirm";
 
 function confirmDeleteArticle(title: string, onConfirm: () => void) {
   confirmDestructiveAction(
-    "この記事を削除しますか？",
+    "この英文を削除しますか？",
     `「${title}」を削除すると、紐づくクイズや学習データもすべて消去されます。この操作は取り消せません。`,
     "削除する",
     onConfirm
@@ -90,7 +90,7 @@ export default function ArticlesIndexScreen() {
     ? axios.isAxiosError(analyzeArticle.error)
       ? (analyzeArticle.error.response?.data?.detail ??
         (analyzeArticle.error.code === "ECONNABORTED"
-          ? "サーバーからの応答がタイムアウトしました。記事が長い場合は時間がかかることがあります。"
+          ? "サーバーからの応答がタイムアウトしました。英文が長い場合は時間がかかることがあります。"
           : "サーバーに接続できませんでした。バックエンドが起動しているか、接続先URLを確認してください。"))
       : "解析中にエラーが発生しました。"
     : null;
@@ -98,7 +98,7 @@ export default function ArticlesIndexScreen() {
   return (
     <SafeAreaView className="flex-1 bg-primary-50 dark:bg-neutral-900" edges={["bottom"]}>
       <GradientHeader
-        title="記事一覧"
+        title="英文一覧"
         subtitle="AIが解析した英文教材"
         right={
           <Button
@@ -164,7 +164,7 @@ export default function ArticlesIndexScreen() {
           ListEmptyComponent={
             !isLoading ? (
               <Text className="mt-10 text-center text-neutral-400">
-                まだ記事がありません。「＋ 新規解析」から追加しましょう。
+                まだ英文がありません。「＋ 新規解析」から追加しましょう。
               </Text>
             ) : null
           }
