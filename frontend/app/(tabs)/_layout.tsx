@@ -4,6 +4,7 @@ import { Text } from "react-native";
 const TAB_ICONS: Record<string, string> = {
   dashboard: "📊",
   articles: "📚",
+  vocabulary: "📖",
   review: "🔁",
   settings: "⚙️",
 };
@@ -32,8 +33,15 @@ export default function TabsLayout() {
       <Tabs.Screen
         name="articles"
         options={{
-          title: "記事",
+          title: "英文",
           tabBarIcon: ({ color }) => <TabIcon name="articles" color={color} />,
+        }}
+      />
+      <Tabs.Screen
+        name="vocabulary"
+        options={{
+          title: "単語帳",
+          tabBarIcon: ({ color }) => <TabIcon name="vocabulary" color={color} />,
         }}
       />
       <Tabs.Screen

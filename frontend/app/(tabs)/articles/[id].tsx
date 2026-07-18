@@ -1,6 +1,5 @@
 import { Ionicons } from "@expo/vector-icons";
 import { useLocalSearchParams, useRouter } from "expo-router";
-import * as Speech from "expo-speech";
 import { useMemo } from "react";
 import { ActivityIndicator, Pressable, ScrollView, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -9,38 +8,18 @@ import { Button } from "@/components/Button";
 import { Card } from "@/components/Card";
 import { GradientHeader } from "@/components/GradientHeader";
 import { FLASH_CARD_OPTIONS, QuizDirectionButtons } from "@/components/QuizDirectionButtons";
-import {
-  difficultyColors,
-  difficultyLabelsJa,
-  questionStatusColors,
-  questionStatusLabelsJa,
-} from "@/constants/theme";
+import { difficultyColors, difficultyLabelsJa, questionStatusColors } from "@/constants/theme";
 import { useArticle } from "@/hooks/useArticle";
 import { useDeleteArticle } from "@/hooks/useDeleteArticle";
 import { useQuizQuestions } from "@/hooks/useQuizQuestions";
-import { useUpdateQuestionStatus } from "@/hooks/useUpdateQuestionStatus";
-import type { ParagraphItem, QuestionStatus, QuizQuestion, QuizQuestionType } from "@/types";
+import type { ParagraphItem, QuestionStatus, QuizQuestionType } from "@/types";
 import { confirmDestructiveAction } from "@/utils/confirm";
-import { speakEnglish } from "@/utils/speech";
-
-// The backend blanks the target word out with this full-width placeholder
-// (see gemini_service.py / analyze_service.py); un-blanking it here rebuilds
-// the model example sentence for the vocabulary list.
-const WORD_BLANK = "＿＿＿＿";
 
 const STATUS_ROWS: { status: QuestionStatus; label: string }[] = [
   { status: "correct", label: "覚えた" },
   { status: "incorrect", label: "復習" },
   { status: "unanswered", label: "未着手" },
 ];
-
-// Tapping the status badge in the vocabulary list steps through all three
-// states in this order, so every state is reachable in at most two taps.
-const NEXT_STATUS: Record<QuestionStatus, QuestionStatus> = {
-  correct: "incorrect",
-  incorrect: "unanswered",
-  unanswered: "correct",
-};
 
 function CountBadge({ status, label, count }: { status: QuestionStatus; label: string; count: number }) {
   return (
@@ -97,144 +76,6 @@ function StatusTestRow({
   );
 }
 
-function StatusPill({
-  status,
-  disabled,
-  onPress,
-}: {
-  status: QuestionStatus;
-  disabled: boolean;
-  onPress: () => void;
-}) {
-  return (
-    <Pressable
-      onPress={onPress}
-      disabled={disabled}
-      hitSlop={8}
-      className={`items-center justify-center rounded-full px-2 py-1 ${questionStatusColors[status]} ${
-        disabled ? "opacity-50" : ""
-      }`}
-    >
-      <Text className={`text-[10px] font-medium ${questionStatusColors[status]}`}>
-        {questionStatusLabelsJa[status]}
-      </Text>
-    </Pressable>
-  );
-}
-
-function VocabularyRow({
-  question,
-  sentenceQuestion,
-}: {
-  question: QuizQuestion;
-  sentenceQuestion: QuizQuestion | undefined;
-}) {
-  const updateWordStatus = useUpdateQuestionStatus();
-  const updateSentenceStatus = useUpdateQuestionStatus();
-
-  const exampleSentence = question.fillInSentence.includes(WORD_BLANK)
-    ? question.fillInSentence.replace(WORD_BLANK, question.answer)
-    : question.fillInSentence;
-
-  const handleSpeakWord = () => {
-    Speech.stop();
-    speakEnglish(question.answer);
-  };
-
-  const handleSpeakSentence = () => {
-    Speech.stop();
-    speakEnglish(exampleSentence);
-  };
-
-  // Cycles 覚えた → 復習 → 未着手 → 覚えた ... A quick manual override,
-  // independent of the auto-grading sync in QuizSession.
-  const handleToggleWordStatus = () => {
-    updateWordStatus.mutate({
-      questionId: question.id,
-      status: NEXT_STATUS[question.status],
-    });
-  };
-
-  const handleToggleSentenceStatus = () => {
-    if (!sentenceQuestion) return;
-    updateSentenceStatus.mutate({
-      questionId: sentenceQuestion.id,
-      status: NEXT_STATUS[sentenceQuestion.status],
-    });
-  };
-
-  return (
-    <View
-      className="flex-row items-start border-b border-neutral-100 py-3 dark:border-neutral-700/60"
-      style={{ gap: 8 }}
-    >
-      <View style={{ width: 132 }}>
-        <Text className="text-sm font-semibold text-neutral-900 dark:text-white">
-          {question.answer}
-        </Text>
-        {/* Word audio + 単語の状態 live in their own fixed slot at the end of
-         * the row, same layout as the sentence column, so both line up in a
-         * straight column regardless of how long the meaning text is. */}
-        <View className="mt-0.5 flex-row items-start" style={{ gap: 4 }}>
-          <Text className="flex-1 text-xs text-neutral-400">
-            {question.partOfSpeechJa ? `${question.partOfSpeechJa}: ` : ""}
-            {question.meaningJa}
-          </Text>
-          <View style={{ alignItems: "flex-end" }}>
-            <Pressable
-              onPress={handleSpeakWord}
-              hitSlop={8}
-              className="items-center justify-center rounded-full bg-primary-50 dark:bg-primary-900/40"
-              style={{ width: 22, height: 22 }}
-            >
-              <Ionicons name="volume-medium-outline" size={12} color="#7C3AED" />
-            </Pressable>
-            <View className="mt-1">
-              <StatusPill
-                status={question.status}
-                disabled={updateWordStatus.isPending}
-                onPress={handleToggleWordStatus}
-              />
-            </View>
-          </View>
-        </View>
-      </View>
-      <View className="flex-1 flex-row items-start" style={{ gap: 6 }}>
-        <View className="flex-1">
-          <Text className="text-xs leading-5 text-neutral-700 dark:text-neutral-200">
-            {exampleSentence}
-          </Text>
-          <Text className="mt-1 text-xs leading-5 text-neutral-400">
-            {question.sentenceTranslationJa}
-          </Text>
-        </View>
-        {/* Sentence audio + 文章の状態 live in their own fixed slot at the
-         * end of the row, same as the word column, so both line up in a
-         * straight column regardless of how long the sentence text is. */}
-        <View style={{ alignItems: "flex-end" }}>
-          <Pressable
-            onPress={handleSpeakSentence}
-            hitSlop={8}
-            className="items-center justify-center rounded-full bg-primary-50 dark:bg-primary-900/40"
-            style={{ width: 22, height: 22 }}
-          >
-            <Ionicons name="volume-medium-outline" size={12} color="#7C3AED" />
-          </Pressable>
-          {sentenceQuestion ? (
-            <View className="mt-1">
-              <StatusPill
-                status={sentenceQuestion.status}
-                disabled={updateSentenceStatus.isPending}
-                onPress={handleToggleSentenceStatus}
-              />
-            </View>
-          ) : null}
-        </View>
-      </View>
-    </View>
-  );
-}
-
 export default function ArticleDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
@@ -256,10 +97,6 @@ export default function ArticleDetailScreen() {
     return counts;
   }, [questions]);
 
-  const vocabularyQuestions = (questions ?? []).filter(
-    (question) => question.type === "vocabulary"
-  );
-
   if (isLoading || !article) {
     return (
       <SafeAreaView className="flex-1 items-center justify-center bg-primary-50 dark:bg-neutral-900">
@@ -270,7 +107,7 @@ export default function ArticleDetailScreen() {
 
   const handleDelete = () => {
     confirmDestructiveAction(
-      "この記事を削除しますか？",
+      "この英文を削除しますか？",
       "紐づくクイズや学習データもすべて消去されます。この操作は取り消せません。",
       "削除する",
       () => {
@@ -357,38 +194,11 @@ export default function ArticleDetailScreen() {
           </View>
         </View>
 
-        <View>
-          <Text className="mb-3 text-base font-semibold text-neutral-900 dark:text-white">
-            全単語一覧
-          </Text>
-          <Card>
-            <View className="flex-row pb-2" style={{ gap: 8 }}>
-              <Text className="text-xs font-medium text-neutral-400" style={{ width: 132 }}>
-                単語 / 品詞: 意味
-              </Text>
-              <Text className="flex-1 text-xs font-medium text-neutral-400">
-                例文 / 日本語ヒント
-              </Text>
-            </View>
-            {vocabularyQuestions.length > 0 ? (
-              vocabularyQuestions.map((question) => (
-                <VocabularyRow
-                  key={question.id}
-                  question={question}
-                  sentenceQuestion={(questions ?? []).find(
-                    (candidate) =>
-                      candidate.type === "sentence" &&
-                      candidate.sentenceTranslationJa === question.sentenceTranslationJa
-                  )}
-                />
-              ))
-            ) : (
-              <Text className="py-4 text-center text-sm text-neutral-400">
-                単語問題がありません
-              </Text>
-            )}
-          </Card>
-        </View>
+        <Button
+          label="全単語一覧を見る"
+          variant="secondary"
+          onPress={() => router.push(`/vocabulary/${article.id}`)}
+        />
       </ScrollView>
     </SafeAreaView>
   );
