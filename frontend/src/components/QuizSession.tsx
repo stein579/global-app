@@ -7,6 +7,7 @@ import { Button } from "@/components/Button";
 import { Card } from "@/components/Card";
 import { GradientHeader } from "@/components/GradientHeader";
 import { ProgressBar } from "@/components/ProgressBar";
+import { QuizNavButtons } from "@/components/QuizNavButtons";
 import { useQuizQuestions } from "@/hooks/useQuizQuestions";
 import { useUpdateQuestionStatus } from "@/hooks/useUpdateQuestionStatus";
 import { useReviewStore } from "@/store/useReviewStore";
@@ -32,7 +33,7 @@ interface QuizSessionProps {
 export function QuizSession({ articleId, type, title, status }: QuizSessionProps) {
   const router = useRouter();
   const { data: questions, isLoading } = useQuizQuestions(articleId, type, status);
-  const { currentIndex, score, submitAnswer, next, reset } = useReviewStore();
+  const { currentIndex, score, submitAnswer, next, previous, reset } = useReviewStore();
   const updateQuestionStatus = useUpdateQuestionStatus();
   const [inputValue, setInputValue] = useState("");
   const [isCorrect, setIsCorrect] = useState<boolean | null>(null);
@@ -105,6 +106,11 @@ export function QuizSession({ articleId, type, title, status }: QuizSessionProps
   const handleNext = () => {
     resetQuestionState();
     next();
+  };
+
+  const handlePrevious = () => {
+    resetQuestionState();
+    previous();
   };
 
   return (
@@ -192,9 +198,11 @@ export function QuizSession({ articleId, type, title, status }: QuizSessionProps
             </Card>
           )}
         </View>
-
-        {answered ? <Button label="次へ" onPress={handleNext} /> : null}
       </ScrollView>
+
+      <View className="px-5 pb-4 pt-2">
+        <QuizNavButtons onPrevious={handlePrevious} onNext={handleNext} isFirst={currentIndex === 0} />
+      </View>
     </SafeAreaView>
   );
 }

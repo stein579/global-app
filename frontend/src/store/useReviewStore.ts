@@ -6,6 +6,7 @@ interface ReviewSessionState {
   answers: Record<string, string>;
   submitAnswer: (questionId: string, answer: string, isCorrect: boolean) => void;
   next: () => void;
+  previous: () => void;
   reset: () => void;
 }
 
@@ -24,5 +25,6 @@ export const useReviewStore = create<ReviewSessionState>((set) => ({
       score: isCorrect ? state.score + 1 : state.score,
     })),
   next: () => set((state) => ({ currentIndex: state.currentIndex + 1 })),
+  previous: () => set((state) => ({ currentIndex: Math.max(0, state.currentIndex - 1) })),
   reset: () => set({ currentIndex: 0, score: 0, answers: {} }),
 }));

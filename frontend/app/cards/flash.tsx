@@ -8,6 +8,7 @@ import { Card } from "@/components/Card";
 import { GradientHeader } from "@/components/GradientHeader";
 import { ProgressBar } from "@/components/ProgressBar";
 import type { FlashCardDirection } from "@/components/QuizDirectionButtons";
+import { QuizNavButtons } from "@/components/QuizNavButtons";
 import { directionLabelsJa } from "@/constants/theme";
 import { useQuizQuestions } from "@/hooks/useQuizQuestions";
 import { useReviewStore } from "@/store/useReviewStore";
@@ -20,7 +21,7 @@ export default function FlashCardScreen() {
   const direction: FlashCardDirection = rawDirection ?? "en_to_ja";
   const router = useRouter();
   const { data: questions, isLoading } = useQuizQuestions(articleId, "vocabulary");
-  const { currentIndex, next, reset } = useReviewStore();
+  const { currentIndex, next, previous, reset } = useReviewStore();
   const [flipped, setFlipped] = useState(false);
 
   useEffect(() => {
@@ -102,12 +103,16 @@ export default function FlashCardScreen() {
           </Card>
         </Pressable>
 
-        <Button
-          label="次のカードへ"
-          onPress={() => {
+        <QuizNavButtons
+          onPrevious={() => {
+            setFlipped(false);
+            previous();
+          }}
+          onNext={() => {
             setFlipped(false);
             next();
           }}
+          isFirst={currentIndex === 0}
         />
       </View>
     </SafeAreaView>
