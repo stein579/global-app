@@ -7,8 +7,11 @@ export type ColorSchemePreference = "light" | "dark" | "system";
 interface AppState {
   colorScheme: ColorSchemePreference;
   dailyGoal: number;
+  /** Selected TTS voice identifier (Speech.Voice#identifier), or null to auto-pick. */
+  voiceIdentifier: string | null;
   setColorScheme: (scheme: ColorSchemePreference) => void;
   setDailyGoal: (goal: number) => void;
+  setVoiceIdentifier: (voiceIdentifier: string | null) => void;
 }
 
 /**
@@ -21,8 +24,10 @@ export const useAppStore = create<AppState>()(
     (set) => ({
       colorScheme: "system",
       dailyGoal: 10,
+      voiceIdentifier: null,
       setColorScheme: (colorScheme) => set({ colorScheme }),
       setDailyGoal: (dailyGoal) => set({ dailyGoal }),
+      setVoiceIdentifier: (voiceIdentifier) => set({ voiceIdentifier }),
     }),
     {
       name: "app-settings",

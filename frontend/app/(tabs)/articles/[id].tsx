@@ -21,6 +21,7 @@ import { useQuizQuestions } from "@/hooks/useQuizQuestions";
 import { useUpdateQuestionStatus } from "@/hooks/useUpdateQuestionStatus";
 import type { ParagraphItem, QuestionStatus, QuizQuestion, QuizQuestionType } from "@/types";
 import { confirmDestructiveAction } from "@/utils/confirm";
+import { speakEnglish } from "@/utils/speech";
 
 // The backend blanks the target word out with this full-width placeholder
 // (see gemini_service.py / analyze_service.py); un-blanking it here rebuilds
@@ -137,12 +138,12 @@ function VocabularyRow({
 
   const handleSpeakWord = () => {
     Speech.stop();
-    Speech.speak(question.answer, { language: "en-US" });
+    speakEnglish(question.answer);
   };
 
   const handleSpeakSentence = () => {
     Speech.stop();
-    Speech.speak(exampleSentence, { language: "en-US" });
+    speakEnglish(exampleSentence);
   };
 
   // Cycles 覚えた → 復習 → 未着手 → 覚えた ... A quick manual override,
