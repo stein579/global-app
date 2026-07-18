@@ -187,10 +187,22 @@ export default function VocabularyDetailScreen() {
   return (
     <SafeAreaView className="flex-1 bg-primary-50 dark:bg-neutral-900" edges={["bottom"]}>
       <GradientHeader
+        eyebrow="単語帳"
         title={article.title}
         subtitle={difficultyLabelsJa[article.difficultyLevel]}
         right={
-          <Button label="単語帳一覧へ" variant="secondary" onPress={() => router.replace("/vocabulary")} />
+          <View style={{ gap: 8 }}>
+            <Button
+              label="単語帳一覧へ"
+              variant="secondary"
+              onPress={() => router.replace("/vocabulary")}
+            />
+            <Button
+              label="英文 & Quizへ"
+              variant="secondary"
+              onPress={() => router.push(`/articles/${article.id}`)}
+            />
+          </View>
         }
       />
 

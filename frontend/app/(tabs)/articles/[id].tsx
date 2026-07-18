@@ -121,10 +121,11 @@ export default function ArticleDetailScreen() {
   return (
     <SafeAreaView className="flex-1 bg-primary-50 dark:bg-neutral-900" edges={["bottom"]}>
       <GradientHeader
+        eyebrow="英文 & Quiz"
         title={article.title}
         subtitle={difficultyLabelsJa[article.difficultyLevel]}
         right={
-          <View className="flex-row items-center gap-2">
+          <View className="flex-row items-start gap-2">
             <Pressable
               onPress={handleDelete}
               hitSlop={8}
@@ -132,7 +133,18 @@ export default function ArticleDetailScreen() {
             >
               <Ionicons name="trash-outline" size={18} color="#FFFFFF" />
             </Pressable>
-            <Button label="戻る" variant="secondary" onPress={() => router.back()} />
+            <View style={{ gap: 8 }}>
+              <Button
+                label="英文一覧へ"
+                variant="secondary"
+                onPress={() => router.replace("/(tabs)/articles")}
+              />
+              <Button
+                label="単語帳へ"
+                variant="secondary"
+                onPress={() => router.push(`/vocabulary/${article.id}`)}
+              />
+            </View>
           </View>
         }
       />
@@ -195,7 +207,7 @@ export default function ArticleDetailScreen() {
         </View>
 
         <Button
-          label="全単語一覧を見る"
+          label="単語帳を見る"
           variant="secondary"
           onPress={() => router.push(`/vocabulary/${article.id}`)}
         />

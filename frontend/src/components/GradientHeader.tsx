@@ -8,11 +8,13 @@ import { gradientColors } from "@/constants/theme";
 interface GradientHeaderProps {
   title: string;
   subtitle?: string;
+  /** Small section label shown above the title, e.g. the section a detail screen belongs to. */
+  eyebrow?: string;
   right?: ReactNode;
 }
 
 /** Vivid purple gradient header used at the top of every top-level screen. */
-export function GradientHeader({ title, subtitle, right }: GradientHeaderProps) {
+export function GradientHeader({ title, subtitle, eyebrow, right }: GradientHeaderProps) {
   const { colorScheme } = useColorScheme();
   const colors = colorScheme === "dark" ? gradientColors.dark : gradientColors.light;
 
@@ -25,6 +27,9 @@ export function GradientHeader({ title, subtitle, right }: GradientHeaderProps) 
     >
       <View className="flex-row items-center justify-between">
         <View className="flex-1">
+          {eyebrow ? (
+            <Text className="text-xs font-semibold tracking-wide text-white/70">{eyebrow}</Text>
+          ) : null}
           <Text className="text-2xl font-bold text-white">{title}</Text>
           {subtitle ? <Text className="mt-1 text-sm text-white/80">{subtitle}</Text> : null}
         </View>
