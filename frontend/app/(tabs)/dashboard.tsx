@@ -1,5 +1,5 @@
-import { Link } from "expo-router";
-import { ScrollView, Text, View } from "react-native";
+import { useRouter } from "expo-router";
+import { Pressable, ScrollView, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import { Card } from "@/components/Card";
@@ -9,6 +9,7 @@ import { useArticles } from "@/hooks/useArticles";
 import { useAppStore } from "@/store/useAppStore";
 
 export default function DashboardScreen() {
+  const router = useRouter();
   const { data: articles, isLoading } = useArticles();
   const dailyGoal = useAppStore((state) => state.dailyGoal);
 
@@ -35,7 +36,7 @@ export default function DashboardScreen() {
         </Card>
 
         <View style={{ gap: 12 }}>
-          <Link href="/(tabs)/articles" asChild>
+          <Pressable onPress={() => router.push("/(tabs)/articles")}>
             <Card>
               <Text className="text-base font-semibold text-neutral-900 dark:text-white">
                 📚 英文一覧・新規解析
@@ -44,9 +45,9 @@ export default function DashboardScreen() {
                 英文を貼り付けてAIで4階層データに解析し、教材を自動生成します
               </Text>
             </Card>
-          </Link>
+          </Pressable>
 
-          <Link href="/(tabs)/review" asChild>
+          <Pressable onPress={() => router.push("/(tabs)/review")}>
             <Card>
               <Text className="text-base font-semibold text-neutral-900 dark:text-white">
                 🔁 復習する
@@ -55,9 +56,9 @@ export default function DashboardScreen() {
                 単語クイズ・文章クイズ・フラッシュカードで定着させましょう
               </Text>
             </Card>
-          </Link>
+          </Pressable>
 
-          <Link href="/(tabs)/settings" asChild>
+          <Pressable onPress={() => router.push("/(tabs)/settings")}>
             <Card>
               <Text className="text-base font-semibold text-neutral-900 dark:text-white">
                 ⚙️ 設定
@@ -66,7 +67,7 @@ export default function DashboardScreen() {
                 テーマや1日の学習目標をカスタマイズできます
               </Text>
             </Card>
-          </Link>
+          </Pressable>
         </View>
       </ScrollView>
     </SafeAreaView>
