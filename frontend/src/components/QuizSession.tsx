@@ -1,7 +1,17 @@
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import { useEffect, useRef, useState } from "react";
-import { ActivityIndicator, Platform, Pressable, ScrollView, Text, TextInput, View } from "react-native";
+import {
+  ActivityIndicator,
+  type NativeSyntheticEvent,
+  Platform,
+  Pressable,
+  ScrollView,
+  Text,
+  TextInput,
+  type TextInputKeyPressEventData,
+  View,
+} from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import { Button } from "@/components/Button";
@@ -143,6 +153,24 @@ export function QuizSession({ articleId, type, title, status }: QuizSessionProps
     next();
   };
 
+  // The sentence field is multiline, so a bare Enter keydown is consumed
+  // internally to insert a newline - it never reaches onSubmitEditing (which
+  // multiline ignores) or bubbles to the window-level listener below that
+  // advances the vocabulary quiz. Handling Enter directly on the field
+  // covers both the judge and advance steps for the sentence quiz without
+  // touching the vocabulary quiz's already-working behavior.
+  const handleInputKeyPress = (event: NativeSyntheticEvent<TextInputKeyPressEventData>) => {
+    if (event.nativeEvent.key !== "Enter") return;
+    if (Platform.OS === "web") {
+      (event.nativeEvent as unknown as { preventDefault?: () => void }).preventDefault?.();
+    }
+    if (answered) {
+      handleNext();
+    } else {
+      handleSubmit();
+    }
+  };
+
   const handlePrevious = () => {
     resetQuestionState();
     previous();
@@ -192,6 +220,7 @@ export function QuizSession({ articleId, type, title, status }: QuizSessionProps
             value={inputValue}
             onChangeText={setInputValue}
             onSubmitEditing={type === "vocabulary" ? handleSubmit : undefined}
+            onKeyPress={type === "sentence" ? handleInputKeyPress : undefined}
             editable={!answered}
             multiline={type === "sentence"}
             numberOfLines={type === "sentence" ? 3 : 1}
