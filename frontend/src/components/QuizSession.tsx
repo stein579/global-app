@@ -1,6 +1,7 @@
+import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
-import { useEffect, useState } from "react";
-import { ActivityIndicator, ScrollView, Text, TextInput, View } from "react-native";
+import { useEffect, useRef, useState } from "react";
+import { ActivityIndicator, Platform, Pressable, ScrollView, Text, TextInput, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import { Button } from "@/components/Button";
@@ -11,7 +12,8 @@ import { QuizNavButtons } from "@/components/QuizNavButtons";
 import { useQuizQuestions } from "@/hooks/useQuizQuestions";
 import { useUpdateQuestionStatus } from "@/hooks/useUpdateQuestionStatus";
 import { useReviewStore } from "@/store/useReviewStore";
-import type { QuestionStatus, QuizQuestionType } from "@/types";
+import type { QuestionStatus, QuizQuestion, QuizQuestionType } from "@/types";
+import { speakEnglish } from "@/utils/speech";
 
 interface QuizSessionProps {
   articleId: string | undefined;
@@ -37,19 +39,54 @@ export function QuizSession({ articleId, type, title, status }: QuizSessionProps
   const updateQuestionStatus = useUpdateQuestionStatus();
   const [inputValue, setInputValue] = useState("");
   const [isCorrect, setIsCorrect] = useState<boolean | null>(null);
+  const [showAnswer, setShowAnswer] = useState(false);
+  // Snapshot of the question set for this session. Grading a question
+  // invalidates `questions` and (when `status` filters the list, e.g. the
+  // 未着手 shortcut) removes the just-answered question from the refetched
+  // result - without this snapshot the list shrinks under `currentIndex`
+  // and it looks like a correct answer auto-advances to the next question.
+  const [sessionQuestions, setSessionQuestions] = useState<QuizQuestion[] | null>(null);
+  const inputRef = useRef<TextInput>(null);
 
   const resetQuestionState = () => {
     setInputValue("");
     setIsCorrect(null);
+    setShowAnswer(false);
   };
 
   useEffect(() => {
     reset();
     resetQuestionState();
+    setSessionQuestions(null);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [articleId, type, status, reset]);
 
-  if (isLoading || !questions) {
+  useEffect(() => {
+    if (questions && sessionQuestions === null) {
+      setSessionQuestions(questions);
+    }
+  }, [questions, sessionQuestions]);
+
+  const answered = isCorrect !== null;
+
+  useEffect(() => {
+    if (Platform.OS !== "web" || !answered) return;
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key !== "Enter") return;
+      event.preventDefault();
+      resetQuestionState();
+      next();
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [answered, next]);
+
+  useEffect(() => {
+    inputRef.current?.focus();
+  }, [currentIndex, sessionQuestions]);
+
+  if (isLoading || !questions || sessionQuestions === null) {
     return (
       <SafeAreaView className="flex-1 items-center justify-center bg-primary-50 dark:bg-neutral-900">
         <ActivityIndicator color="#7C3AED" />
@@ -57,7 +94,7 @@ export function QuizSession({ articleId, type, title, status }: QuizSessionProps
     );
   }
 
-  const total = questions.length;
+  const total = sessionQuestions.length;
   const isFinished = total === 0 || currentIndex >= total;
 
   if (isFinished) {
@@ -87,13 +124,11 @@ export function QuizSession({ articleId, type, title, status }: QuizSessionProps
     );
   }
 
-  const question = questions[currentIndex];
-  const answered = isCorrect !== null;
+  const question = sessionQuestions[currentIndex];
 
   const handleSubmit = () => {
     if (answered) return;
     const trimmed = inputValue.trim();
-    if (trimmed.length === 0) return;
     const correct = trimmed.toLowerCase() === question.answer.trim().toLowerCase();
     setIsCorrect(correct);
     submitAnswer(question.id, trimmed, correct);
@@ -153,6 +188,7 @@ export function QuizSession({ articleId, type, title, status }: QuizSessionProps
 
         <View style={{ gap: 10 }}>
           <TextInput
+            ref={inputRef}
             value={inputValue}
             onChangeText={setInputValue}
             onSubmitEditing={type === "vocabulary" ? handleSubmit : undefined}
@@ -178,13 +214,33 @@ export function QuizSession({ articleId, type, title, status }: QuizSessionProps
             }`}
           />
 
-          {!answered ? (
-            <Button
-              label="回答する"
-              onPress={handleSubmit}
-              disabled={inputValue.trim().length === 0}
-            />
-          ) : (
+          <Button label="判定する" onPress={handleSubmit} disabled={answered} />
+
+          <Button
+            label={showAnswer ? "正解を隠す" : "正解を表示"}
+            variant="secondary"
+            onPress={() => setShowAnswer((value) => !value)}
+          />
+
+          {showAnswer ? (
+            <Card>
+              <View className="flex-row items-center justify-between" style={{ gap: 8 }}>
+                <Text className="flex-1 text-base font-semibold text-neutral-900 dark:text-white">
+                  {`正解: ${question.answer}`}
+                </Text>
+                <Pressable
+                  onPress={() => speakEnglish(question.answer)}
+                  hitSlop={8}
+                  className="items-center justify-center rounded-full bg-primary-50 dark:bg-primary-900/40"
+                  style={{ width: 26, height: 26 }}
+                >
+                  <Ionicons name="volume-medium-outline" size={14} color="#7C3AED" />
+                </Pressable>
+              </View>
+            </Card>
+          ) : null}
+
+          {answered ? (
             <Card>
               <Text
                 className={`text-base font-semibold ${
@@ -196,7 +252,7 @@ export function QuizSession({ articleId, type, title, status }: QuizSessionProps
                 {isCorrect ? "正解！素晴らしい！完璧です！ 🎉" : `惜しい！この間違いが成長のチャンス！ ・ 正解: ${question.answer}`}
               </Text>
             </Card>
-          )}
+          ) : null}
         </View>
       </ScrollView>
 

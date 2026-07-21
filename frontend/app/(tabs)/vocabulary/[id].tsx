@@ -10,6 +10,7 @@ import { GradientHeader } from "@/components/GradientHeader";
 import { difficultyLabelsJa, questionStatusColors, questionStatusLabelsJa } from "@/constants/theme";
 import { useArticle } from "@/hooks/useArticle";
 import { useQuizQuestions } from "@/hooks/useQuizQuestions";
+import { useResetQuestionStatuses } from "@/hooks/useResetQuestionStatuses";
 import { useUpdateQuestionStatus } from "@/hooks/useUpdateQuestionStatus";
 import type { QuestionStatus, QuizQuestion } from "@/types";
 import { speakEnglish } from "@/utils/speech";
@@ -45,7 +46,7 @@ function StatusPill({
         disabled ? "opacity-50" : ""
       }`}
     >
-      <Text className={`text-[10px] font-medium ${questionStatusColors[status]}`}>
+      <Text className={`text-xs font-medium ${questionStatusColors[status]}`}>
         {questionStatusLabelsJa[status]}
       </Text>
     </Pressable>
@@ -98,15 +99,15 @@ function VocabularyRow({
       className="flex-row items-start border-b border-neutral-100 py-3 dark:border-neutral-700/60"
       style={{ gap: 8 }}
     >
-      <View style={{ width: 132 }}>
-        <Text className="text-sm font-semibold text-neutral-900 dark:text-white">
+      <View style={{ width: 160 }}>
+        <Text className="text-base font-semibold text-neutral-900 dark:text-white">
           {question.answer}
         </Text>
         {/* Word audio + 単語の状態 live in their own fixed slot at the end of
          * the row, same layout as the sentence column, so both line up in a
          * straight column regardless of how long the meaning text is. */}
         <View className="mt-0.5 flex-row items-start" style={{ gap: 4 }}>
-          <Text className="flex-1 text-xs text-neutral-400">
+          <Text className="flex-1 text-sm text-neutral-500 dark:text-neutral-400">
             {question.partOfSpeechJa ? `${question.partOfSpeechJa}: ` : ""}
             {question.meaningJa}
           </Text>
@@ -115,9 +116,9 @@ function VocabularyRow({
               onPress={handleSpeakWord}
               hitSlop={8}
               className="items-center justify-center rounded-full bg-primary-50 dark:bg-primary-900/40"
-              style={{ width: 22, height: 22 }}
+              style={{ width: 26, height: 26 }}
             >
-              <Ionicons name="volume-medium-outline" size={12} color="#7C3AED" />
+              <Ionicons name="volume-medium-outline" size={14} color="#7C3AED" />
             </Pressable>
             <View className="mt-1">
               <StatusPill
@@ -131,10 +132,10 @@ function VocabularyRow({
       </View>
       <View className="flex-1 flex-row items-start" style={{ gap: 6 }}>
         <View className="flex-1">
-          <Text className="text-xs leading-5 text-neutral-700 dark:text-neutral-200">
+          <Text className="text-base leading-6 text-neutral-700 dark:text-neutral-200">
             {exampleSentence}
           </Text>
-          <Text className="mt-1 text-xs leading-5 text-neutral-400">
+          <Text className="mt-1 text-base leading-6 text-neutral-500 dark:text-neutral-400">
             {question.sentenceTranslationJa}
           </Text>
         </View>
@@ -146,9 +147,9 @@ function VocabularyRow({
             onPress={handleSpeakSentence}
             hitSlop={8}
             className="items-center justify-center rounded-full bg-primary-50 dark:bg-primary-900/40"
-            style={{ width: 22, height: 22 }}
+            style={{ width: 26, height: 26 }}
           >
-            <Ionicons name="volume-medium-outline" size={12} color="#7C3AED" />
+            <Ionicons name="volume-medium-outline" size={14} color="#7C3AED" />
           </Pressable>
           {sentenceQuestion ? (
             <View className="mt-1">
@@ -171,10 +172,24 @@ export default function VocabularyDetailScreen() {
   const router = useRouter();
   const { data: article, isLoading } = useArticle(id);
   const { data: questions } = useQuizQuestions(article?.id);
+  // Separate mutation instances so each button's isPending/disabled state
+  // is independent - sharing one mutation made pressing either button
+  // visually "press" both.
+  const resetWordStatuses = useResetQuestionStatuses(article?.id);
+  const resetSentenceStatuses = useResetQuestionStatuses(article?.id);
 
   const vocabularyQuestions = (questions ?? []).filter(
     (question) => question.type === "vocabulary"
   );
+  const sentenceQuestions = (questions ?? []).filter((question) => question.type === "sentence");
+
+  const handleResetWordStatuses = () => {
+    resetWordStatuses.mutate(vocabularyQuestions.map((question) => question.id));
+  };
+
+  const handleResetSentenceStatuses = () => {
+    resetSentenceStatuses.mutate(sentenceQuestions.map((question) => question.id));
+  };
 
   if (isLoading || !article) {
     return (
@@ -208,13 +223,41 @@ export default function VocabularyDetailScreen() {
 
       <ScrollView className="flex-1 px-5" contentContainerStyle={{ paddingVertical: 20, gap: 16 }}>
         <Card>
-          <View className="flex-row pb-2" style={{ gap: 8 }}>
-            <Text className="text-xs font-medium text-neutral-400" style={{ width: 132 }}>
+          <View className="flex-row items-center pb-2" style={{ gap: 8 }}>
+            <Text className="text-sm font-medium text-neutral-400" style={{ width: 160 }}>
               単語 / 品詞: 意味
             </Text>
-            <Text className="flex-1 text-xs font-medium text-neutral-400">
+            <Text className="flex-1 text-sm font-medium text-neutral-400">
               例文 / 日本語ヒント
             </Text>
+            <View className="flex-row" style={{ gap: 6 }}>
+              <Pressable
+                onPress={handleResetWordStatuses}
+                disabled={resetWordStatuses.isPending || vocabularyQuestions.length === 0}
+                className={`rounded-full bg-neutral-100 px-2 py-1 dark:bg-neutral-700 ${
+                  resetWordStatuses.isPending || vocabularyQuestions.length === 0
+                    ? "opacity-50"
+                    : ""
+                }`}
+              >
+                <Text className="text-xs font-medium text-neutral-500 dark:text-neutral-300">
+                  単語の初期化
+                </Text>
+              </Pressable>
+              <Pressable
+                onPress={handleResetSentenceStatuses}
+                disabled={resetSentenceStatuses.isPending || sentenceQuestions.length === 0}
+                className={`rounded-full bg-neutral-100 px-2 py-1 dark:bg-neutral-700 ${
+                  resetSentenceStatuses.isPending || sentenceQuestions.length === 0
+                    ? "opacity-50"
+                    : ""
+                }`}
+              >
+                <Text className="text-xs font-medium text-neutral-500 dark:text-neutral-300">
+                  英文の初期化
+                </Text>
+              </Pressable>
+            </View>
           </View>
           {vocabularyQuestions.length > 0 ? (
             vocabularyQuestions.map((question) => (
