@@ -9,9 +9,12 @@ interface AppState {
   dailyGoal: number;
   /** Selected TTS voice identifier (Speech.Voice#identifier), or null to auto-pick. */
   voiceIdentifier: string | null;
+  /** TTS playback speed multiplier (1.0 = normal). */
+  speechRate: number;
   setColorScheme: (scheme: ColorSchemePreference) => void;
   setDailyGoal: (goal: number) => void;
   setVoiceIdentifier: (voiceIdentifier: string | null) => void;
+  setSpeechRate: (speechRate: number) => void;
 }
 
 /**
@@ -25,9 +28,11 @@ export const useAppStore = create<AppState>()(
       colorScheme: "system",
       dailyGoal: 10,
       voiceIdentifier: null,
+      speechRate: 1.0,
       setColorScheme: (colorScheme) => set({ colorScheme }),
       setDailyGoal: (dailyGoal) => set({ dailyGoal }),
       setVoiceIdentifier: (voiceIdentifier) => set({ voiceIdentifier }),
+      setSpeechRate: (speechRate) => set({ speechRate }),
     }),
     {
       name: "app-settings",

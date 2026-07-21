@@ -139,11 +139,12 @@ export function getAvailableEnglishVoices(): Promise<Speech.Voice[]> {
  * back to the best auto-detected native English voice.
  */
 export async function speakEnglish(text: string, options: Speech.SpeechOptions = {}) {
-  const selectedVoiceIdentifier = useAppStore.getState().voiceIdentifier;
+  const { voiceIdentifier: selectedVoiceIdentifier, speechRate } = useAppStore.getState();
   const voice = selectedVoiceIdentifier ?? (await findBestEnglishVoice())?.identifier;
 
   Speech.speak(text, {
     language: "en-US",
+    rate: speechRate,
     ...options,
     voice: options.voice ?? voice,
   });

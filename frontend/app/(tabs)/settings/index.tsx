@@ -18,6 +18,16 @@ const COLOR_SCHEME_OPTIONS: { value: ColorSchemePreference; label: string }[] = 
 
 const DAILY_GOAL_STEPS = [5, 10, 15, 20];
 
+const SPEECH_RATE_OPTIONS: { value: number; label: string }[] = [
+  { value: 0.5, label: "0.5x" },
+  { value: 0.75, label: "0.75x" },
+  { value: 1.0, label: "1.0x" },
+  { value: 1.25, label: "1.25x" },
+  { value: 1.5, label: "1.5x" },
+  { value: 1.75, label: "1.75x" },
+  { value: 2.0, label: "2.0x" },
+];
+
 const VOICE_PREVIEW_TEXT = "Hello, this is a test of the text to speech voice.";
 
 const GENDER_LABELS_JA: Record<ReturnType<typeof guessVoiceGender>, string> = {
@@ -79,6 +89,8 @@ export default function SettingsScreen() {
   const setDailyGoal = useAppStore((state) => state.setDailyGoal);
   const voiceIdentifier = useAppStore((state) => state.voiceIdentifier);
   const setVoiceIdentifier = useAppStore((state) => state.setVoiceIdentifier);
+  const speechRate = useAppStore((state) => state.speechRate);
+  const setSpeechRate = useAppStore((state) => state.setSpeechRate);
 
   const [voices, setVoices] = useState<Speech.Voice[]>([]);
 
@@ -152,6 +164,23 @@ export default function SettingsScreen() {
                 端末に追加の英語音声が見つかりませんでした。OSの設定から音声を追加できます。
               </Text>
             ) : null}
+          </View>
+        </Card>
+
+        <Card>
+          <Text className="mb-3 text-base font-semibold text-neutral-900 dark:text-white">
+            読み上げ速度
+          </Text>
+          <View className="flex-row flex-wrap" style={{ gap: 8 }}>
+            {SPEECH_RATE_OPTIONS.map((option) => (
+              <View key={option.value} style={{ width: "22%" }}>
+                <Button
+                  label={option.label}
+                  variant={speechRate === option.value ? "primary" : "secondary"}
+                  onPress={() => setSpeechRate(option.value)}
+                />
+              </View>
+            ))}
           </View>
         </Card>
       </ScrollView>

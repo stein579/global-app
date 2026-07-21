@@ -2,6 +2,7 @@ import { LinearGradient } from "expo-linear-gradient";
 import { useColorScheme } from "nativewind";
 import type { ReactNode } from "react";
 import { Text, View } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { gradientColors } from "@/constants/theme";
 
@@ -17,13 +18,15 @@ interface GradientHeaderProps {
 export function GradientHeader({ title, subtitle, eyebrow, right }: GradientHeaderProps) {
   const { colorScheme } = useColorScheme();
   const colors = colorScheme === "dark" ? gradientColors.dark : gradientColors.light;
+  const insets = useSafeAreaInsets();
 
   return (
     <LinearGradient
       colors={colors}
       start={{ x: 0, y: 0 }}
       end={{ x: 1, y: 1 }}
-      className="rounded-b-3xl px-5 pb-6 pt-16"
+      className="rounded-b-3xl px-5 pb-6"
+      style={{ paddingTop: insets.top + 16 }}
     >
       <View className="flex-row items-center justify-between">
         <View className="flex-1">
