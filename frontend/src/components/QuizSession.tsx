@@ -56,7 +56,11 @@ export function QuizSession({ articleId, type, title, status }: QuizSessionProps
   // result - without this snapshot the list shrinks under `currentIndex`
   // and it looks like a correct answer auto-advances to the next question.
   const [sessionQuestions, setSessionQuestions] = useState<QuizQuestion[] | null>(null);
+  // Ids judged 正解/覚えた that should no longer be reachable via 前へ/次へ -
+  // a 復習 judgment leaves the question navigable so it can be revisited.
+  const [purgedIds, setPurgedIds] = useState<Set<string>>(new Set());
   const inputRef = useRef<TextInput>(null);
+  const handleNextRef = useRef<() => void>(() => {});
 
   const resetQuestionState = () => {
     setInputValue("");
@@ -68,6 +72,7 @@ export function QuizSession({ articleId, type, title, status }: QuizSessionProps
     reset();
     resetQuestionState();
     setSessionQuestions(null);
+    setPurgedIds(new Set());
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [articleId, type, status, reset]);
 
@@ -78,23 +83,35 @@ export function QuizSession({ articleId, type, title, status }: QuizSessionProps
   }, [questions, sessionQuestions]);
 
   const answered = isCorrect !== null;
+  // Only a correct answer locks the question - an incorrect one leaves the
+  // field editable so the user can keep correcting and re-judging it.
+  const locked = isCorrect === true;
 
   useEffect(() => {
-    if (Platform.OS !== "web" || !answered) return;
+    if (Platform.OS !== "web" || !locked) return;
     const handleKeyDown = (event: KeyboardEvent) => {
       if (event.key !== "Enter") return;
       event.preventDefault();
-      resetQuestionState();
-      next();
+      // Routed through a ref (rather than calling handleNext directly)
+      // since handleNext is defined later, after sessionQuestions/question
+      // are derived - it always resolves to the latest render's version.
+      handleNextRef.current();
     };
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [answered, next]);
+  }, [locked]);
 
   useEffect(() => {
     inputRef.current?.focus();
   }, [currentIndex, sessionQuestions]);
+
+  const handleBack = () => {
+    if (router.canGoBack()) {
+      router.back();
+    } else {
+      router.replace("/(tabs)/review");
+    }
+  };
 
   if (isLoading || !questions || sessionQuestions === null) {
     return (
@@ -124,10 +141,11 @@ export function QuizSession({ articleId, type, title, status }: QuizSessionProps
                 onPress={() => {
                   reset();
                   resetQuestionState();
+                  setPurgedIds(new Set());
                 }}
               />
             ) : null}
-            <Button label="戻る" variant="secondary" onPress={() => router.back()} />
+            <Button label="戻る" variant="secondary" onPress={handleBack} />
           </View>
         </View>
       </SafeAreaView>
@@ -136,8 +154,14 @@ export function QuizSession({ articleId, type, title, status }: QuizSessionProps
 
   const question = sessionQuestions[currentIndex];
 
+  // 正解/覚えた で purge された問題を除いた「残り問題数」基準の表示。current
+  // question は purge 前提なのでここには常に含まれる (>= 1件保証)。
+  const remainingQuestions = sessionQuestions.filter((q) => !purgedIds.has(q.id));
+  const remainingTotal = remainingQuestions.length;
+  const positionInRemaining = remainingQuestions.findIndex((q) => q.id === question.id) + 1;
+
   const handleSubmit = () => {
-    if (answered) return;
+    if (locked) return;
     const trimmed = inputValue.trim();
     const correct = trimmed.toLowerCase() === question.answer.trim().toLowerCase();
     setIsCorrect(correct);
@@ -148,9 +172,36 @@ export function QuizSession({ articleId, type, title, status }: QuizSessionProps
     });
   };
 
+  // Walks from `from` in `direction`, skipping over purged questions, and
+  // returns the first reachable index - which may land out of bounds
+  // (>= sessionQuestions.length, or < 0) when nothing is left that way.
+  const findVisibleIndex = (from: number, direction: 1 | -1, purged: Set<string>) => {
+    let idx = from + direction;
+    while (idx >= 0 && idx < sessionQuestions.length && purged.has(sessionQuestions[idx].id)) {
+      idx += direction;
+    }
+    return idx;
+  };
+
   const handleNext = () => {
+    const purged = locked ? new Set(purgedIds).add(question.id) : purgedIds;
+    if (locked) setPurgedIds(purged);
+    const targetIndex = findVisibleIndex(currentIndex, 1, purged);
+    for (let i = currentIndex; i < targetIndex; i++) next();
     resetQuestionState();
-    next();
+  };
+  handleNextRef.current = handleNext;
+
+  const hasVisiblePrevious = findVisibleIndex(currentIndex, -1, purgedIds) >= 0;
+
+  // Manual override, independent of (and taking priority over) the
+  // auto-graded result - e.g. a correct answer that still felt like a
+  // guess can be pushed back into 復習 rather than staying 覚えた.
+  const handleOverrideStatus = (status: "correct" | "incorrect") => {
+    const correct = status === "correct";
+    setIsCorrect(correct);
+    submitAnswer(question.id, inputValue.trim(), correct);
+    updateQuestionStatus.mutate({ questionId: question.id, status });
   };
 
   // The sentence field is multiline, so a bare Enter keydown is consumed
@@ -164,7 +215,7 @@ export function QuizSession({ articleId, type, title, status }: QuizSessionProps
     if (Platform.OS === "web") {
       (event.nativeEvent as unknown as { preventDefault?: () => void }).preventDefault?.();
     }
-    if (answered) {
+    if (locked) {
       handleNext();
     } else {
       handleSubmit();
@@ -172,19 +223,21 @@ export function QuizSession({ articleId, type, title, status }: QuizSessionProps
   };
 
   const handlePrevious = () => {
+    const targetIndex = findVisibleIndex(currentIndex, -1, purgedIds);
+    if (targetIndex < 0) return;
+    for (let i = currentIndex; i > targetIndex; i--) previous();
     resetQuestionState();
-    previous();
   };
 
   return (
     <SafeAreaView className="flex-1 bg-primary-50 dark:bg-neutral-900" edges={["bottom"]}>
       <GradientHeader
         title={title}
-        subtitle={`${currentIndex + 1} / ${total} 問`}
-        right={<Button label="中断" variant="secondary" onPress={() => router.back()} />}
+        subtitle={`${positionInRemaining} / ${remainingTotal} 問`}
+        right={<Button label="中断" variant="secondary" onPress={handleBack} />}
       />
       <ScrollView className="flex-1 px-5" contentContainerStyle={{ paddingVertical: 20, gap: 16 }}>
-        <ProgressBar progress={currentIndex / total} />
+        <ProgressBar progress={(positionInRemaining - 1) / remainingTotal} />
 
         <Card>
           {question.partOfSpeechJa || question.meaningJa ? (
@@ -221,7 +274,7 @@ export function QuizSession({ articleId, type, title, status }: QuizSessionProps
             onChangeText={setInputValue}
             onSubmitEditing={type === "vocabulary" ? handleSubmit : undefined}
             onKeyPress={type === "sentence" ? handleInputKeyPress : undefined}
-            editable={!answered}
+            editable={!locked}
             multiline={type === "sentence"}
             numberOfLines={type === "sentence" ? 3 : 1}
             placeholder={
@@ -243,7 +296,7 @@ export function QuizSession({ articleId, type, title, status }: QuizSessionProps
             }`}
           />
 
-          <Button label="判定する" onPress={handleSubmit} disabled={answered} />
+          <Button label="判定する" onPress={handleSubmit} disabled={locked} />
 
           <Button
             label={showAnswer ? "正解を隠す" : "正解を表示"}
@@ -285,8 +338,16 @@ export function QuizSession({ articleId, type, title, status }: QuizSessionProps
         </View>
       </ScrollView>
 
-      <View className="px-5 pb-4 pt-2">
-        <QuizNavButtons onPrevious={handlePrevious} onNext={handleNext} isFirst={currentIndex === 0} />
+      <View className="px-5 pb-4 pt-2" style={{ gap: 10 }}>
+        <QuizNavButtons onPrevious={handlePrevious} onNext={handleNext} isFirst={!hasVisiblePrevious} />
+        <View className="flex-row justify-end" style={{ gap: 10 }}>
+          <View style={{ width: 100 }}>
+            <Button label="覚えた" variant="secondary" onPress={() => handleOverrideStatus("correct")} />
+          </View>
+          <View style={{ width: 100 }}>
+            <Button label="復習" variant="secondary" onPress={() => handleOverrideStatus("incorrect")} />
+          </View>
+        </View>
       </View>
     </SafeAreaView>
   );
