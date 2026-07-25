@@ -61,6 +61,7 @@ export function QuizSession({ articleId, type, title, status }: QuizSessionProps
   const [purgedIds, setPurgedIds] = useState<Set<string>>(new Set());
   const inputRef = useRef<TextInput>(null);
   const handleNextRef = useRef<() => void>(() => {});
+  const handlePreviousRef = useRef<() => void>(() => {});
 
   const resetQuestionState = () => {
     setInputValue("");
@@ -88,17 +89,36 @@ export function QuizSession({ articleId, type, title, status }: QuizSessionProps
   const locked = isCorrect === true;
 
   useEffect(() => {
-    if (Platform.OS !== "web" || !locked) return;
+    if (Platform.OS !== "web") return;
     const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.key !== "Enter") return;
+      if (event.key === "Enter") {
+        if (!locked) return;
+        event.preventDefault();
+        // Routed through a ref (rather than calling handleNext directly)
+        // since handleNext is defined later, after sessionQuestions/question
+        // are derived - it always resolves to the latest render's version.
+        handleNextRef.current();
+        return;
+      }
+      if (event.key !== "ArrowRight" && event.key !== "ArrowLeft") return;
+      // Unlike Enter (which only makes sense once judged), 前へ/次へ are
+      // always clickable regardless of judged/showAnswer state, so the
+      // shortcut mirrors that and always fires - even while the answer
+      // field is focused and being typed into.
       event.preventDefault();
-      // Routed through a ref (rather than calling handleNext directly)
-      // since handleNext is defined later, after sessionQuestions/question
-      // are derived - it always resolves to the latest render's version.
-      handleNextRef.current();
+      if (event.key === "ArrowRight") {
+        handleNextRef.current();
+      } else {
+        handlePreviousRef.current();
+      }
     };
-    window.addEventListener("keydown", handleKeyDown);
-    return () => window.removeEventListener("keydown", handleKeyDown);
+    // Registered on the capture phase: react-native-web's TextInput stops
+    // propagation of Left/Right arrow keydowns itself (for in-field cursor
+    // movement), so a bubble-phase window listener never sees them while
+    // the answer field is focused - capture fires on the way down, before
+    // that happens.
+    window.addEventListener("keydown", handleKeyDown, true);
+    return () => window.removeEventListener("keydown", handleKeyDown, true);
   }, [locked]);
 
   useEffect(() => {
@@ -228,6 +248,7 @@ export function QuizSession({ articleId, type, title, status }: QuizSessionProps
     for (let i = currentIndex; i > targetIndex; i--) previous();
     resetQuestionState();
   };
+  handlePreviousRef.current = handlePrevious;
 
   return (
     <SafeAreaView className="flex-1 bg-primary-50 dark:bg-neutral-900" edges={["bottom"]}>
