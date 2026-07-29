@@ -327,8 +327,8 @@ export function QuizSession({ articleId, type, title, status }: QuizSessionProps
 
           {showAnswer ? (
             <Card>
-              <View className="flex-row items-center justify-between" style={{ gap: 8 }}>
-                <Text className="flex-1 text-base font-semibold text-neutral-900 dark:text-white">
+              <View className="flex-row items-center" style={{ gap: 8 }}>
+                <Text className="text-base font-semibold text-neutral-900 dark:text-white">
                   {`正解: ${question.answer}`}
                 </Text>
                 <Pressable
@@ -345,15 +345,27 @@ export function QuizSession({ articleId, type, title, status }: QuizSessionProps
 
           {answered ? (
             <Card>
-              <Text
-                className={`text-base font-semibold ${
-                  isCorrect
-                    ? "text-emerald-600 dark:text-emerald-300"
-                    : "text-rose-600 dark:text-rose-300"
-                }`}
-              >
-                {isCorrect ? "正解！素晴らしい！完璧です！ 🎉" : `惜しい！この間違いが成長のチャンス！ ・ 正解: ${question.answer}`}
-              </Text>
+              <View className="flex-row items-center" style={{ gap: 8 }}>
+                <Text
+                  className={`text-base font-semibold ${
+                    isCorrect
+                      ? "text-emerald-600 dark:text-emerald-300"
+                      : "text-rose-600 dark:text-rose-300"
+                  }`}
+                >
+                  {isCorrect
+                    ? `正解！素晴らしい！完璧です！ 🎉 ・ 正解: ${question.answer}`
+                    : `惜しい！この間違いが成長のチャンス！ ・ 正解: ${question.answer}`}
+                </Text>
+                <Pressable
+                  onPress={() => speakEnglish(question.answer)}
+                  hitSlop={8}
+                  className="items-center justify-center rounded-full bg-primary-50 dark:bg-primary-900/40"
+                  style={{ width: 26, height: 26 }}
+                >
+                  <Ionicons name="volume-medium-outline" size={14} color="#7C3AED" />
+                </Pressable>
+              </View>
             </Card>
           ) : null}
         </View>
