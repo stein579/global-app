@@ -82,6 +82,11 @@ alter table quiz_questions add column if not exists status text not null default
 -- get a real sequence (set in analyze_service.py).
 alter table quiz_questions add column if not exists order_index int not null default 0;
 
+-- Manual drag-and-drop ordering for the 英文一覧 / 単語帳一覧 lists. Existing
+-- rows all default to 0 and tiebreak on created_at desc (unchanged from the
+-- previous fixed sort), so this is a no-op until the user actually reorders.
+alter table articles add column if not exists order_index int not null default 0;
+
 -- Drop columns from the old multiple_choice / en_to_ja quiz format
 -- (no-ops on fresh installs where they were never created above).
 alter table sentences drop column if exists grammar_point;

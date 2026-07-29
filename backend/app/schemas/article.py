@@ -52,6 +52,12 @@ class ArticleAnalyzeRequest(BaseModel):
     source_url: str | None = None
 
 
+class ArticleReorderRequest(BaseModel):
+    """Full list of article ids in their new display order (index 0 first)."""
+
+    article_ids: list[str] = Field(..., min_length=1)
+
+
 class ArticleSummaryResponse(BaseModel):
     id: str
     title: str

@@ -149,6 +149,10 @@ export async function deleteArticle(articleId: string): Promise<void> {
   await apiClient.delete(`/v1/articles/${articleId}`);
 }
 
+export async function reorderArticles(articleIds: string[]): Promise<void> {
+  await apiClient.patch("/v1/articles/reorder", { article_ids: articleIds });
+}
+
 export async function fetchArticleQuestions(articleId: string): Promise<QuizQuestion[]> {
   const { data } = await apiClient.get<QuizQuestionDto[]>(
     `/v1/articles/${articleId}/questions`

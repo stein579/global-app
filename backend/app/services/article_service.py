@@ -200,11 +200,23 @@ def list_articles() -> list[ArticleSummaryResponse]:
     rows = (
         supabase.table("articles")
         .select("id, title, summary_ja, difficulty_level, source_url, created_at")
+        .order("order_index")
         .order("created_at", desc=True)
         .execute()
         .data
     )
     return [ArticleSummaryResponse(**row) for row in rows]
+
+
+def reorder_articles(article_ids: list[str]) -> None:
+    """Persists a manual drag-and-drop order for 英文一覧 / 単語帳一覧: writes
+    0..N-1 into order_index following the given id sequence."""
+
+    supabase = get_supabase()
+    for index, article_id in enumerate(article_ids):
+        supabase.table("articles").update({"order_index": index}).eq(
+            "id", article_id
+        ).execute()
 
 
 def delete_article(article_id: str) -> bool:

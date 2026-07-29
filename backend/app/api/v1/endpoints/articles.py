@@ -4,6 +4,7 @@ from app.schemas.article import (
     ArticleAnalyzeRequest,
     ArticleAnalyzeResponse,
     ArticleDetailResponse,
+    ArticleReorderRequest,
     ArticleSummaryResponse,
 )
 from app.schemas.question import QuizQuestionResponse
@@ -14,6 +15,7 @@ from app.services.article_service import (
     get_quiz_questions,
     list_articles,
     persist_article,
+    reorder_articles,
 )
 
 router = APIRouter(prefix="/articles", tags=["articles"])
@@ -38,6 +40,14 @@ def analyze(payload: ArticleAnalyzeRequest) -> ArticleAnalyzeResponse:
 @router.get("", response_model=list[ArticleSummaryResponse])
 def get_articles() -> list[ArticleSummaryResponse]:
     return list_articles()
+
+
+@router.patch("/reorder", status_code=204)
+def reorder_articles_endpoint(payload: ArticleReorderRequest) -> None:
+    """Persists the drag-and-drop order from 英文一覧 / 単語帳一覧 (both list
+    all articles via `article_ids`, in their new display order)."""
+
+    reorder_articles(payload.article_ids)
 
 
 @router.get("/{article_id}", response_model=ArticleDetailResponse)

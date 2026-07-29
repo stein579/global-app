@@ -4,6 +4,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Stack } from "expo-router";
 import { useColorScheme as useNativewindColorScheme } from "nativewind";
 import { useEffect } from "react";
+import { GestureHandlerRootView } from "react-native-gesture-handler";
 
 import { useAppStore } from "@/store/useAppStore";
 
@@ -30,13 +31,15 @@ export default function RootLayout() {
   }, [colorScheme, setColorScheme]);
 
   return (
-    <QueryClientProvider client={queryClient}>
-      <Stack screenOptions={{ headerShown: false }}>
-        <Stack.Screen name="(tabs)" />
-        <Stack.Screen name="quiz/vocabulary" options={{ presentation: "modal" }} />
-        <Stack.Screen name="quiz/sentence" options={{ presentation: "modal" }} />
-        <Stack.Screen name="cards/flash" options={{ presentation: "modal" }} />
-      </Stack>
-    </QueryClientProvider>
+    <GestureHandlerRootView style={{ flex: 1 }}>
+      <QueryClientProvider client={queryClient}>
+        <Stack screenOptions={{ headerShown: false }}>
+          <Stack.Screen name="(tabs)" />
+          <Stack.Screen name="quiz/vocabulary" options={{ presentation: "modal" }} />
+          <Stack.Screen name="quiz/sentence" options={{ presentation: "modal" }} />
+          <Stack.Screen name="cards/flash" options={{ presentation: "modal" }} />
+        </Stack>
+      </QueryClientProvider>
+    </GestureHandlerRootView>
   );
 }

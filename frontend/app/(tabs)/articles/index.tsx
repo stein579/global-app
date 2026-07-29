@@ -2,16 +2,18 @@ import { Ionicons } from "@expo/vector-icons";
 import axios from "axios";
 import { useRouter } from "expo-router";
 import { useState } from "react";
-import { FlatList, Pressable, Text, TextInput, View } from "react-native";
+import { Pressable, Text, TextInput, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import { Button } from "@/components/Button";
 import { Card } from "@/components/Card";
 import { GradientHeader } from "@/components/GradientHeader";
+import { ReorderableList } from "@/components/ReorderableList";
 import { difficultyColors, difficultyLabelsJa } from "@/constants/theme";
 import { useAnalyzeArticle } from "@/hooks/useAnalyzeArticle";
 import { useArticles } from "@/hooks/useArticles";
 import { useDeleteArticle } from "@/hooks/useDeleteArticle";
+import { useReorderArticles } from "@/hooks/useReorderArticles";
 import type { ArticleSummary } from "@/types";
 import { confirmDestructiveAction } from "@/utils/confirm";
 
@@ -28,14 +30,24 @@ function ArticleRow({
   article,
   onPress,
   onDelete,
+  onLongPress,
+  isActive,
 }: {
   article: ArticleSummary;
   onPress: () => void;
   onDelete: () => void;
+  onLongPress: () => void;
+  isActive: boolean;
 }) {
   return (
-    <Card className="mb-3">
-      <Pressable onPress={onPress} className="pr-8">
+    <Card className={`mb-3 ${isActive ? "opacity-70" : ""}`}>
+      <Pressable
+        onPress={onPress}
+        onLongPress={onLongPress}
+        disabled={isActive}
+        delayLongPress={250}
+        className="pr-8"
+      >
         <View className="flex-row items-center justify-between">
           <Text className="flex-1 text-base font-semibold text-neutral-900 dark:text-white" numberOfLines={1}>
             {article.title}
@@ -66,6 +78,7 @@ export default function ArticlesIndexScreen() {
   const { data: articles, isLoading, refetch, isRefetching } = useArticles();
   const analyzeArticle = useAnalyzeArticle();
   const deleteArticle = useDeleteArticle();
+  const reorderArticles = useReorderArticles();
 
   const [showForm, setShowForm] = useState(false);
   const [rawText, setRawText] = useState("");
@@ -149,16 +162,19 @@ export default function ArticlesIndexScreen() {
           </Card>
         ) : null}
 
-        <FlatList
+        <ReorderableList
           data={articles ?? []}
           keyExtractor={(item) => item.id}
           refreshing={isRefetching}
           onRefresh={refetch}
-          renderItem={({ item }) => (
+          onReorder={(data) => reorderArticles.mutate(data)}
+          renderItem={({ item, drag, isActive }) => (
             <ArticleRow
               article={item}
               onPress={() => router.push(`/articles/${item.id}`)}
               onDelete={() => deleteArticle.mutate(item.id)}
+              onLongPress={drag}
+              isActive={isActive}
             />
           )}
           ListEmptyComponent={
